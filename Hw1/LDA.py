@@ -3,74 +3,68 @@ import matplotlib.pyplot as plt
 import random
 
 class LDA():
-    def __init__(self, data, num_dims, label, cv):
+    def __init__(self, data, label, n_dims):
         '''
         Class initializer
         -------------------------------------
         Input:
         data: the dataset
-        num_dims: number of dimensions to project into
         label: name of the target variable
         cv: number of folds for cross-validation
         -------------------------------------
-        Output:
         '''
         self.data = data
-        self.num_dims = num_dims
         self.label = label
-        self.cv = cv
+        self.n_dims = n_dims
 
-    def fit(self):
+    def fit_transform(self):
         '''
-        Function to fit the data and perform LDA
+        Function to return the projected input data into n dimensions
         '''
-        def calculate_parameters(data):
+        # get the groups
+        grouped = self.data.groupby(self.data.loc[:,self.label])
+        self.classes = [k for k in grouped.groups.keys()]
 
-            # get the groups
-            grouped = data.groupby(data.loc[:,self.label])
-            self.classes = [k for k in grouped.groups.keys()]
+        # mean for each class:
+        data_class = {}
+        X = {}
+        means = {}
+        for k in self.classes:
+            data_class[k] = grouped.get_group(k)
+            X[k] = data_class[k].drop(self.label,axis=1)
+            means[k] = np.array(np.mean(X[k]))
 
-            # mean for each class:
-            data_class = {}
-            X = {}
-            means = {}
-            for k in self.classes:
-                data_class[k] = grouped.get_group(k)
-                X[k] = data_class[k].drop(self.label,axis=1)
-                means[k] = np.array(np.mean(X[k]))
+        self.means = means
 
-            # mean of the total data
-            mean_total = np.array(np.mean(data.drop(self.label,axis=1)))
+        # mean of the total data
+        mean_total = np.array(np.mean(self.data.drop(self.label,axis=1)))
 
-            # between covariance matrix
-            S_B = np.zeros((X[0].shape[1], X[0].shape[1]))
-            for k in X.keys():
-                S_B += np.multiply(len(X[c]),
-                                    np.outer((means[c] - mean_total),
-                                    np.transpose(means[c] - mean_total)))
+        # between covariance matrix
+        S_B = np.zeros((X[0].shape[1], X[0].shape[1]))
+        for k in X.keys():
+            S_B += np.multiply(len(X[k]),
+                                np.outer((means[k] - mean_total),
+                                np.transpose(means[k] - mean_total)))
 
-    # Split the data into k folds
-    def cross_val_split(data, folds, index):
-        data_idx = []
-        indices = [i for i in range(data.shape[0])]
+        # within covariance matrix
+        S_W = np.zeros((X[0].shape[1], X[0].shape[1]))
+        for k in self.classes:
+            S_k = X[k] - means[k]
+            S_W += np.dot(S_k.T, S_k)
 
-        fold_size = int(len(data)/folds)
-        for i in range(folds):
-            fold_idx = []
-            while len(fold_idx) < fold_size:
-                idx = random.randrange(len(indices))
-                fold_idx.append(indices.pop(idx))
-            data_idx.append(fold_idx)
+        # eigendecomposition
+        S = np.dot(np.linalg.pinv(S_W), S_B)
+        eigval, eigvec = np.linalg.eig(S)
 
-        test_idx = data_idx[index]
-        del data_idx[index]
-        train_idx = [item for sublist in data_idx for item in sublist]
+        # sort eigenvalues in decreasing order
+        eig = [(eigval[i], eigvec[:,i]) for i in range(len(eigval))]
+        eig = sorted(eig, key=lambda x: x[0], reverse=True)
 
-        test = data.iloc[test_idx]
-        train = data.iloc[train_idx]
+        # only take the top (number of dimensions projected into) vectors
+        w = np.array([eig[i][1] for i in range(self.n_dims)])
 
-        return train,test
+        new_data = {}
+        for k in X.keys():
+            new_data[k] = np.dot(X[k], w.T)
 
-    # k-fold cross-validation
-    for i in range(self.cv):
-        train, test = cross_val_split(self.data,self.cv,i)
+        return new_data
