@@ -22,20 +22,64 @@ class LogisticRegression():
 		self.max_iter = 50
 		self.threshold = 1e-10
 
+	def to_dict(self, df):
+	    '''
+	    Function to turn a dataframe into a dictionary
+	    '''
+	    # get the groups
+	    grouped = df.groupby(df.loc[:,self.label])
+	    self.classes = [k for k in grouped.groups.keys()]
+
+	    # for each class
+	    data_class = {}
+	    X = {}
+		t = {}
+	    for k in self.classes:
+	        data_class[k] = grouped.get_group(k)
+			t[k] = data_class[k][self.label]
+	        X[k] = data_class[k].drop(self.label,axis=1)
+	    return X, t
+
 	# Sigmoid function
 	def sigmoid(self, a):
 		return 1/(1 + np.exp(-a))
 
 	# Softmax function
-	def softmax(self, a):
-		#e = np.exp(a - np.max(a))
-		e = np.exp(a)
-		if e.ndim == 1:
-			return e / np.sum(e, axis=0)
-		else:
-			return e / np.array([np.sum(e, axis=1)]).T
+	def softmax(self, a_k):
+		e_k = np.exp(a_k)
+		e_total = np.sum([np.exp(a[i]) for i in classes])
+		return e_k / e_total
 
-	# 2-class logistic regression
+	def multi_logreg(self, data):
+		# input data and label
+		t = np.array(data[label])	# shape (N,)
+		X = data.drop(self.label, axis=1)	# shape (N, D)
+		# get dimensions of X
+		N = X.shape[0]		# number of observations (rows)
+		D = X.shape[1]		# number of features (columns)
+		# add a column of ones to X
+		ones = np.array([[1]*N]).T 					# shape (1, N)
+		phi = np.concatenate((ones,X), axis=1)		# shape (N, D+1)
+
+		# group the data by classes
+		X_dict, t_dict = self.to_dict(data)
+
+		w = {}
+		a = {}
+		p = {}
+		E = 0
+		# for each class
+		for i in self.classes:
+			# initialize weights
+			w[i] =  0.001* np.random.randn(D+1)		# shape (D+1,)
+			# activations for each class
+			a[i] = np.dot(phi, w[i])				# shape (N,)
+			# get posteriors
+			p[i] = self.softmax(a[i])				# shape (N,)
+
+			# cross-entropy (we want to minimize this)
+			E -= t_dict[i]*safe_ln(p[i])
+
 	def binary_logreg(self, data):
 		'''
 		Function to update weights
@@ -52,7 +96,7 @@ class LogisticRegression():
 		# initialize the weights
 		w = np.zeros(D+1)		# shape (D+1,)
 		#w = np.random.randn(D+1)	# shape (D+1,)
-		
+
 		for i in range(self.max_iter):
 			# get activations
 			a = np.dot(phi,w)			# shape (N,)
@@ -79,7 +123,7 @@ class LogisticRegression():
 				print("Iteration: ", i)
 				print("Updated weight: ", w)
 				break
-	
+
 
 def safe_ln(p):
     for x in p:
