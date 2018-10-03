@@ -8,7 +8,7 @@ from sklearn.datasets import load_digits
 from sklearn.datasets import load_boston
 
 class LogisticRegression():
-	def __init__(self, data, label):
+	def __init__(self, X, y):
 		'''
 		Class initializer
 		-------------------------------------
@@ -17,28 +17,25 @@ class LogisticRegression():
 		label: name of the target variable
 		-------------------------------------
 		'''
-		self.data = data
-		self.label = label
+		self.X = X
+		self.N, self.D = X.shape
+		# add a column of ones to X
+		ones = np.ones(N).reshape(1,N)
+		self.phi = np.concatenate((ones,self.X), axis=1)		# shape (N, D+1)
+
+		self.y = y
+		self.classes = np.unique(y)
+		self.K = len(self.classes)
+		# turn labels into one-hot-coding
+		self.t_one_hot = np.zeros((N,len(self.classes)))
+		self.t_one_hot[np.arange(N), self.y] = 1				# shape (N, K)
+
 		self.max_iter = 50
 		self.threshold = 1e-10
 
-	def to_dict(self, df):
-	    '''
-	    Function to turn a dataframe into a dictionary
-	    '''
-	    # get the groups
-	    grouped = df.groupby(df.loc[:,self.label])
-	    self.classes = [k for k in grouped.groups.keys()]
+		# initialize weights
+		self.W = 0.001 * np.random.random((D+1, len(classes)))	# shape (D+1, K)
 
-	    # for each class
-	    data_class = {}
-	    X = {}
-		t = {}
-	    for k in self.classes:
-	        data_class[k] = grouped.get_group(k)
-			t[k] = data_class[k][self.label]
-	        X[k] = data_class[k].drop(self.label,axis=1)
-	    return X, t
 
 	# Sigmoid function
 	def sigmoid(self, a):
@@ -46,39 +43,22 @@ class LogisticRegression():
 
 	# Softmax function
 	def softmax(self, a_k):
-		e_k = np.exp(a_k)
-		e_total = np.sum([np.exp(a[i]) for i in classes])
-		return e_k / e_total
+		e = np.exp(a - np.max(a, axis=1).reshape((-1,1)))
+		e_total = np.sum(e, axis=1).reshape((-1,1))
+		return e / e_total
 
-	def multi_logreg(self, data):
-		# input data and label
-		t = np.array(data[label])	# shape (N,)
-		X = data.drop(self.label, axis=1)	# shape (N, D)
-		# get dimensions of X
-		N = X.shape[0]		# number of observations (rows)
-		D = X.shape[1]		# number of features (columns)
-		# add a column of ones to X
-		ones = np.array([[1]*N]).T 					# shape (1, N)
-		phi = np.concatenate((ones,X), axis=1)		# shape (N, D+1)
+	def IRLS(self, data):
 
-		# group the data by classes
-		X_dict, t_dict = self.to_dict(data)
-
-		w = {}
-		a = {}
-		p = {}
-		E = 0
-		# for each class
-		for i in self.classes:
-			# initialize weights
-			w[i] =  0.001* np.random.randn(D+1)		# shape (D+1,)
-			# activations for each class
-			a[i] = np.dot(phi, w[i])				# shape (N,)
-			# get posteriors
-			p[i] = self.softmax(a[i])				# shape (N,)
+		for i in range(self.max_iter):
+			# activations
+			a = np.dot(self.phi, self.W)								# shape (N, K)
+			# posterior
+			p = softmax(a)									# shape (N, K)
 
 			# cross-entropy (we want to minimize this)
-			E -= t_dict[i]*safe_ln(p[i])
+			E = - np.sum(self.t_one_hot * np.log(p + 1e-6))	
+
+		return E
 
 	def binary_logreg(self, data):
 		'''
@@ -125,12 +105,6 @@ class LogisticRegression():
 				break
 
 
-def safe_ln(p):
-    for x in p:
-        if x <= 0:
-            return 0
-        return np.log(x)
-
 def to_label(data, target, percentile):
 	'''
 	Input: data, name of target column, percentile to partition data
@@ -142,16 +116,48 @@ def to_label(data, target, percentile):
 	data[target] = [1 if d > part_val else 0 for d in data[target]]
 	return data
 
-if __name__ == '__main__':
-	filename = sys.argv[1]
+def train_test_split(data, label, test_ratio=0.2):
+	'''
+	Fuction to split the dataset into train-test sets
+	based on the specified size of the test set
+	'''
+	test_idx = []
+	indices = [i for i in range(data.shape[0])]
+
+	test_size = test_ratio * len(data)
+	while len(test_idx) < test_size:
+		test_idx.append(random.randrange(len(indices)))
+
+	train_idx = [i for i in indices if i not in test_idx]
+
+	test = data.iloc[test_idx]
+	train = data.iloc[train_idx]
+
+	y_train = train[label]
+	X_train = train.drop(label,axis=1)
+
+	y_test = test[label]
+	X_test = test.drop(label,axis=1)
+
+	return X_train, y_train, X_test, y_test
+
+
+def logisticRegression(filename):
+	'''
+	Input:
+		filename: boston / digits
+		num_splits: number of 80-20 train-test splits for evaluation
+		train_percent: vector containing percentages of training data to be used for training
+	------------------------------------------------------------
+	Output:
+		test set error rates for each training set percent
+	'''
 	if filename == 'digits':
 		# Load in the data
 		digits = load_digits()
 		data = pd.DataFrame(digits.data)
 		label = 'class'
 		data[label] = digits.target
-
-		print(data.head(5))
 
 	elif filename == 'boston':
 		# Load in the data
@@ -162,8 +168,14 @@ if __name__ == '__main__':
 		# Transform the target variable to binary
 		to_label(data, label, 50)
 
-		log_reg = LogisticRegression(data, label)
-		log_reg.binary_logreg(data)
-
 	else:
 		print("Please enter a valid file name.")
+
+	# Split the dataset into 80-20 train-test sets
+	X_train, y_train, X_test, y_test = train_test_split(data, label=label)
+	print(X_train.head(5))
+
+if __name__ == '__main__':
+	filename = sys.argv[1]
+
+	logisticRegression(filename)

@@ -34,7 +34,9 @@ def cross_val_split(data, folds, index):
 	return train,test
 
 if __name__ == '__main__':
+	
 	filename = sys.argv[1]
+
 	if filename == 'digits':
 		# Load in the data
 		digits = load_digits()
