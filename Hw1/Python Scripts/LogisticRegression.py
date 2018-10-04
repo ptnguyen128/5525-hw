@@ -21,6 +21,7 @@ class LogisticRegression():
 
 		self.y = y
 		self.classes = np.unique(y)
+		self.K = len(self.classes)
 		# turn labels into one-hot-coding
 		self.t_one_hot = np.zeros((self.N,len(self.classes)))
 		self.t_one_hot[np.arange(self.N), self.y] = 1				# shape (N, K)
@@ -53,13 +54,13 @@ class LogisticRegression():
 			# cross-entropy (to be minimized)
 			E = - np.sum(self.t_one_hot * np.log(p + 1e-6))
 
-			# weighing matrix
-			R = np.diag(p[:,0]*p[:,1])
+			for k in self.classes:
+				R = np.diag(p[:,k]* (1-p[:,k]))
 
-			# update new weights
-			z = a - np.dot(np.linalg.pinv(R),(p-self.t_one_hot)) 	# shape (N,K)
-			H = np.dot(self.X.T, R).dot(self.X)							# shape (D,D)
-			self.W = np.linalg.pinv(H).dot(self.X.T).dot(R).dot(z)		# shape (D,K)
+				# update new weights
+				z = a[:,k] - np.dot(np.linalg.pinv(R), (p[:,k] - self.t_one_hot[:,k]))
+				H = np.dot(self.X.T, R).dot(self.X)
+				self.W[:,k] = np.linalg.pinv(H).dot(self.X.T).dot(R).dot(z)
 
 			new_p = self.softmax(np.dot(self.X, self.W))
 			new_E = - np.sum(self.t_one_hot * np.log(new_p + 1e-6))
@@ -117,4 +118,4 @@ if __name__ == '__main__':
 
 	mean_error, std_error = logisticRegression(filename, num_splits, [10, 25, 50, 75, 100])
 
-	print("Mean test errors are %s , with standard errors % s" % (mean_error, std_error))
+print("Mean test errors are %s , with standard errors % s" % (mean_error, std_error))
