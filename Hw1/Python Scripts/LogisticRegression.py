@@ -21,7 +21,6 @@ class LogisticRegression():
 
 		self.y = y
 		self.classes = np.unique(y)
-		self.K = len(self.classes)
 		# turn labels into one-hot-coding
 		self.t_one_hot = np.zeros((self.N,len(self.classes)))
 		self.t_one_hot[np.arange(self.N), self.y] = 1				# shape (N, K)

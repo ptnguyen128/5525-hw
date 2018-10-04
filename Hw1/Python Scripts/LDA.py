@@ -2,6 +2,8 @@ import pandas as pd, numpy as np
 import matplotlib.pyplot as plt
 import random
 
+from train_test_split import cross_val_split
+
 class LDA():
     def __init__(self, data, label, n_dims):
         '''
@@ -167,7 +169,7 @@ class LDA():
         # Perform cross-validation
         for i in range(cv):
             # Split data into train and test sets
-            train, test = self.cross_val_split(self.data, folds=cv, index=i)
+            train, test = cross_val_split(self.data, folds=cv, index=i)
 
             # Train the model on the training set
             g_prior, g_mean, g_cov = self.gaussian_model(train)
@@ -178,29 +180,5 @@ class LDA():
             test_errors.append(calculate_error(self,test))
 
         return train_errors, test_errors
-
-    def cross_val_split(self, data, folds, index):
-        '''
-        Function to split the data into train-test sets for k-fold cross-validation
-        '''
-        data_idx = []
-        indices = [i for i in range(data.shape[0])]
-
-        fold_size = int(len(data)/folds)
-        for i in range(folds):
-            fold_idx = []
-            while len(fold_idx) < fold_size:
-                idx = random.randrange(len(indices))
-                fold_idx.append(indices.pop(idx))
-            data_idx.append(fold_idx)
-
-        test_idx = data_idx[index]
-        del data_idx[index]
-        train_idx = [item for sublist in data_idx for item in sublist]
-
-        test = data.iloc[test_idx]
-        train = data.iloc[train_idx]
-
-        return train,test
 
         

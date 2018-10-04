@@ -1,4 +1,10 @@
+import sys
+
 import pandas as pd, numpy as np
+import random
+
+from train_test_split import train_test_split
+from data import load_data
 
 class GaussianModel():
     def __init__(self, data):
