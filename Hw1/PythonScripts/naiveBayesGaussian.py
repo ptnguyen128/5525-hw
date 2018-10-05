@@ -2,6 +2,7 @@ import sys
 
 import pandas as pd, numpy as np
 import random
+import pickle
 
 from train_test_split import train_test_split
 from data import load_data
@@ -63,40 +64,44 @@ class NaiveBayes():
 
 
 def naiveBayesGaussian(filename, num_splits, train_percent):
-    '''
-    Input:
-        filename: boston / digits
-        num_splits: number of 80-20 train-test splits for evaluation
-        train_percent: vector containing percentages of training data to be used for training
-    ------------------------------------------------------------
-    Output:
-        test set error rates for each training set percent
-    '''
-    data, label = load_data(filename)
+	'''
+	Input:
+	filename: boston / digits
+	num_splits: number of 80-20 train-test splits for evaluation
+	train_percent: vector containing percentages of training data to be used for training
+	------------------------------------------------------------
+	Output:
+	test set error rates for each training set percent
+	'''
+	data, label = load_data(filename)
 
-    error_matrix = np.zeros((num_splits, len(train_percent)))
+	error_matrix = np.zeros((num_splits, len(train_percent)))
 
-    for i in range(num_splits):
-        # Split the dataset into 80-20 train-test sets
-        X_train, y_train, X_test, y_test = train_test_split(data, label=label)
+	for i in range(num_splits):
+		# Split the dataset into 80-20 train-test sets
+		X_train, y_train, X_test, y_test = train_test_split(data, label=label)
 
-        for j,p in enumerate(train_percent):
-            # subset the training set
-            train_max_idx = int(np.floor(p/100.00 * X_train.shape[0]))
-            X_train_p = X_train.loc[:train_max_idx]
-            y_train_p = y_train.loc[:train_max_idx]
+		for j,p in enumerate(train_percent):
+			# subset the training set
+			train_max_idx = int(np.floor(p/100.00 * X_train.shape[0]))
+			X_train_p = X_train.loc[:train_max_idx]
+			y_train_p = y_train.loc[:train_max_idx]
 
-            # fit Logistic Regression model
-            naive_bayes = NaiveBayes(X_train_p, y_train_p)
-            naive_bayes.gaussian_params()
+			# fit Logistic Regression model
+			naive_bayes = NaiveBayes(X_train_p, y_train_p)
+			naive_bayes.gaussian_params()
 
-            # calculate test error
-            error_matrix[i,j] = naive_bayes.calculate_error(X_test, y_test)
+			# calculate test error
+			error_matrix[i,j] = naive_bayes.calculate_error(X_test, y_test)
 
-    mean_error = np.mean(error_matrix, axis=0)
-    std_error = np.std(error_matrix, axis=0, ddof=1)
+	pickle_on = open("./pickle/%s_nb_error_matrix.pickle" % filename, 'wb')
+	pickle.dump(error_matrix, pickle_on)
+	pickle_on.close()
 
-    return mean_error, std_error
+	mean_error = np.mean(error_matrix, axis=0)
+	std_error = np.std(error_matrix, axis=0, ddof=1)
+
+	return mean_error, std_error
 
 if __name__ == '__main__':
     filename = sys.argv[1]
