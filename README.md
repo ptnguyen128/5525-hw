@@ -1,4 +1,4 @@
-# Machine Learning Homework
+# Machine Learning Assignments
 
 (in progress)  
 
