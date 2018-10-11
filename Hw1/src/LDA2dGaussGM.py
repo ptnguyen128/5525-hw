@@ -23,7 +23,9 @@ if __name__ == '__main__':
 	train_err, test_err = lda.gaussian_errors(cv=n_folds)
 
 	# Print out the results
-	print("Train error is % s, with standard deviation % s"
+	print("Train errors for 10 folds are: ", train_err)
+	print("Average train error is % s, with standard deviation % s"
 		% (np.mean(train_err), np.std(train_err)))
+	print("Test errors for 10 folds are: ", test_err)
 	print("Test error is % s, with standard deviation % s"
 		% (np.mean(test_err), np.std(test_err)))

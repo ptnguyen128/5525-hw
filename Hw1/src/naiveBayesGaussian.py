@@ -38,7 +38,7 @@ class NaiveBayes():
         Function to calculate a Gaussian class-conditional density
         for point x
         '''
-        A = 1/((2*np.pi)**(len(x)/2))
+        A = 1/((2*np.pi)**0.5)
         B = 1/(np.prod(std)+1e-6)
         C = - np.sum(((x - mean)**2) / (2 * (std**2)))
         return A*B*np.exp(C)
