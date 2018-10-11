@@ -1,9 +1,3 @@
------------------------------
-Name: Thao Nguyen
-Student ID: 5415745
-Email: nguy3409@umn.edu
-------------------------------
-
 All .py files are in the src folder. Please change your working directory into this folder before executing any command.
 
 Once you're in this folder, commands can be executed as follows:
