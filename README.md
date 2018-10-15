@@ -7,7 +7,7 @@ Language: Python
 
 Implemented algorithms:  
 - Fisher Linear Discriminant Analysis  
-- Bivariate Gaussian Generative Model (multinomial classification)  
+- Gaussian Generative Model (multinomial classification)  
 - (Multinomial) Logistic Regression   
-- Naive-Bayes with marginal Gaussian distributions (GNB)  
+- Gaussian Naive-Bayes   
 - SVM  
