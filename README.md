@@ -10,3 +10,4 @@ Implemented algorithms:
 - Bivariate Gaussian Generative Model (multinomial classification)  
 - (Multinomial) Logistic Regression   
 - Naive-Bayes with marginal Gaussian distributions (GNB)  
+- SVM  
