@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
 from plotBoundary import *
+import pandas as pd
+import numpy as np
+from plotBoundary import *
 # import your SVM training code
 from SVM import softMarginSVM
 
@@ -10,24 +13,22 @@ print ('======Training======')
 # load data from csv files
 train = pd.read_csv('data/data_'+name+'_train.csv', header=None)
 # use deep copy here to make cvxopt happy
-X = np.array(train.iloc[:,:-1])
-Y = np.array([float(num) for num in train.iloc[:,-1]])
-Y = np.reshape(Y, [X.shape[0],1])
+X = np.array(train.iloc[:,:2])
+Y = train.iloc[:,-1]
+y = [float(num) for num in train.iloc[:,-1]]
+y = np.reshape(y, [X.shape[0],1])
 
-print(X[0].shape)
-print(Y.shape)
+# Carry out training, primal and/or dual
+SVM = softMarginSVM(C=0.1)
+SVM.fit(X,y)
 
-# # Carry out training, primal and/or dual
-# SVM = softMarginSVM(C=0.1)
-# SVM.fit(X,Y)
+# Define the predictSVM(x) function, which uses trained parameters
+def predictSVM(x):
+    x = x.reshape(-1,1)
+    return np.sign(np.dot(SVM.w.T, x)+SVM.b)
 
-# # Define the predictSVM(x) function, which uses trained parameters
-# def predictSVM(x):
-# 	x = x.reshape(-1,1)
-# 	return np.dot(SVM.w, x.T)
-
-# # plot training results
-# plotDecisionBoundary(X, Y, predictSVM, [-1, 0, 1], title = 'SVM Train')
+# plot training results
+plotDecisionBoundary(X, Y, predictSVM, [-1, 0, 1], title = 'SVM Train')
 
 
 # print ('======Validation======')
