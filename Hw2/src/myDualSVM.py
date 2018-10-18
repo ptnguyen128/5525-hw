@@ -18,12 +18,11 @@ def ppData(data):
 	y = np.reshape(y, [X.shape[0],1])
 	return X, y
 
-
 def myDualSVM(filename):
 	data = pd.read_csv(filename, sep=",", header=None)
 
 	#C = [0.01, 0.1, 1, 10, 100]
-	C = [0.01, 0.1]
+	C = [0.01]
 
 	# Random 80-20 train-test split
 	for i in range(NUM_SPLITS):
@@ -31,7 +30,7 @@ def myDualSVM(filename):
 		train, test = train_test_split(data, test_ratio=0.2)
 
 		err_c = {}
-		
+
 		# 10-fold cross-validation
 		for c in C:
 			print("Performing %s-fold cross_validation with C=%s" % (N_FOLDS,c))
@@ -40,18 +39,25 @@ def myDualSVM(filename):
 
 			for k in range(N_FOLDS):
 				cv_train, cv_val = cross_val_split(train, folds=10, index=k)
-				
+
 				X_train, y_train = ppData(cv_train)
 				X_val, y_val = ppData(cv_val)
-				
+
 				SVM = softMarginSVM(C=c)
 				SVM.fit(X_train, y_train)
+
+				# pickle this model
+				pickle_on = open("./pickle/dualSVM/split_%s_C_%s.pickle" % (i,c), 'wb')
+				pickle.dump(SVM, pickle_on)
+				pickle_on.close()
+
 				errors.append(SVM.calculate_error(X_val, y_val))
-			
+
 			err_c[c] = np.mean(errors)
 
 	return err_c
 
 if __name__ == '__main__':
-	filename = sys.argv[1]
-	myDualSVM(filename)
+	filename = './data/MNIST-13.csv'
+	err = myDualSVM(filename)
+	print(err)
