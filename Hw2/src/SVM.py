@@ -38,11 +38,11 @@ class softMarginSVM():
 		self.w = np.sum(a * y * X, axis = 0).reshape(-1,1)
 		# bias
 		self.b = np.mean(y[sv] - np.dot(X[self.support_], self.w))
-
+	
 	def calculate_error(self, X_test, y_test):
 		y_pred = []
 		for x in X_test:
-			pred = np.sign(np.dot(self.w.T, x))
+			pred = np.sign(np.dot(self.w.T, x)+self.b)
 			y_pred.append(pred)
 		error = np.sum(y_pred != y_test) / float(len(y_test))
 		return error
