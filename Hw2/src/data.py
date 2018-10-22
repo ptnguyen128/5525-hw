@@ -1,38 +1,22 @@
 import pandas as pd, numpy as np
-import random
 
-from sklearn.datasets import load_digits
-from sklearn.datasets import load_boston
+def ppData(data):
+    '''
+    Helper function to pre-process the input data, shape(N,D+1)
+    -----------------------------------------------------------
+    Output: 
+        X: numpy array, shape(N,D)
+        y: numpy array, shape(1,N) - binary
+    '''
+    X = np.array(data.iloc[:,1:])
 
-def to_label(data, target, percentile):
-	'''
-	Input: data, name of target column, percentile to partition data
-	Output: data, but with the target column values
-	changed from continuous to categorial (classes)
-	'''
-	frac = percentile / 100.0
-	part_val = data[target].quantile(frac)
-	data[target] = [1 if d > part_val else 0 for d in data[target]]
-	return data
+    classes = np.unique(data.iloc[:,0])
+    Y = data.iloc[:,0]
+    # re-assign classes to -1 or 1 (1 if class is 1, -1 if class is 3)
+    y = [1.0 if num == classes[0] else -1.0 for num in Y]
+    y = np.reshape(y, [X.shape[0],1])
+    return X, Y, y
 
 def load_data(filename):
-    if filename == 'digits':
-    	# Load in the data
-    	digits = load_digits()
-    	data = pd.DataFrame(digits.data)
-    	label = 'class'
-    	data[label] = digits.target
-
-    elif filename == 'boston':
-    	# Load in the data
-    	boston = load_boston()
-    	data = pd.DataFrame(boston.data, columns=boston.feature_names)
-    	label = 'HomeVal50'
-    	data[label] = boston.target
-    	# Transform the target variable to binary
-    	to_label(data, label, 50)
-
-    else:
-    	print("Please enter a valid file name.")
-
-    return data, label
+    data = pd.read_csv(filename, sep=",", header=None)
+    return data

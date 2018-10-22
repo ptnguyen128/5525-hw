@@ -8,6 +8,7 @@ import pickle
 def plot_percents(logreg_mean, logreg_std, nb_mean, nb_std, train_percent):
 	plt.xlim([8, 102])
 	plt.ylim([0.05, 0.6])
+	plt.figure()
 	plt.errorbar(train_percent, logreg_mean, yerr=logreg_std*1.96, label='Logistic Regression', fmt="-")
 	plt.errorbar(train_percent, nb_mean, yerr=nb_std*1.96, label='Naive Bayes', fmt="-")
 	plt.legend()
