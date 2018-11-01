@@ -10,4 +10,4 @@ Implemented algorithms:
 - Gaussian Generative Model (multinomial classification)  
 - (Multinomial) Logistic Regression   
 - Gaussian Naive-Bayes   
-- SVM  
+- SVM (Linear, Pegasos, Stochastic Gradient Descent)  
