@@ -12,6 +12,3 @@ For example:
   $python ./src/myDualSVM.py MNIST-13
   $python ./src/myPegasos.py MNIST-13
   $python ./src/mySoftplus.py MNIST-13
-
-Notes:
-- Solution write-up is in /tex/ folder (.pdf file).
